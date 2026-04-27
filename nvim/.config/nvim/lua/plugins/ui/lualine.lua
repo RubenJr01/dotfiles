@@ -46,7 +46,7 @@ return {
           -- LSP server name
           {
             function()
-              local clients = vim.lsp.get_active_clients({ bufnr = 0 })
+              local clients = vim.lsp.get_clients({ bufnr = 0 })
               if #clients == 0 then return "" end
               local names = {}
               for _, c in ipairs(clients) do

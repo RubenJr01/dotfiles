@@ -36,21 +36,16 @@ return {
             { icon = " ", key = "m", desc = "Mason", action = ":Mason" },
             { icon = " ", key = "q", desc = "Quit", action = ":qa" },
           },
-        }
-      },
-
-      sections = {
-        { section = "header" },
-        { section = "keys",   gap = 1, padding = 1 },
-        { section = "startup" },
-
-        {
-          section = "terminal",
-          cmd = "pokemon-colorscripts -r --no-title; sleep .1",
-          random = 10,
-          pane = 2,
-          indent = 4,
-          height = 30,
+        },
+        sections = {
+          {
+            section = "terminal",
+            cmd = "figlet -f slant -c -w 60 'NEOVIM' | lolcat --force",
+            height = 6,
+            padding = 1,
+          },
+          { section = "keys", gap = 1, padding = 1 },
+          { section = "startup" },
         },
       },
 
@@ -185,6 +180,11 @@ return {
             staged    = " ",
             unstaged  = "󱈸 ",
             untracked = " ",
+          },
+        },
+        sources = {
+          explorer = {
+            hidden = true,
           },
         },
       },

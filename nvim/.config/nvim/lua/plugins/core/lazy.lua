@@ -21,7 +21,8 @@ vim.opt.rtp:prepend(lazypath)
 require("lazy").setup({
   -- Load all plugin specs from the plugins directory
   spec = {
-    { import = "plugins.core" },
+    { import = "plugins.core.deps" },
+    { import = "plugins.core.treesitter" },
     { import = "plugins.ui" },
     { import = "plugins" },
   },
@@ -32,8 +33,8 @@ require("lazy").setup({
     colorscheme = { "onedark", "habamax" },
   },
   checker = {
-    enabled = true,   -- auto-check for plugin updates
-    notify = false,   -- don't notify on startup
+    enabled = true, -- auto-check for plugin updates
+    notify = false, -- don't notify on startup
   },
   performance = {
     rtp = {

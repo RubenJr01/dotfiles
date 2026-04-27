@@ -1,7 +1,3 @@
--- ============================================================
--- plugins/lsp/lspconfig.lua
--- ============================================================
-
 return {
   -- Mason: install & manage LSP servers, linters, formatters
   {
@@ -21,20 +17,18 @@ return {
         },
       },
       ensure_installed = {
-        -- LSP servers
+        -- LSP servers (Mason package names)
         "pyright",
         "ruff",
-        "ts_ls",
+        "typescript-language-server",
         "intelephense",
         "jdtls",
         "html-lsp",
         "css-lsp",
-        "sqls",
-        "jsonls",
+        "json-lsp",
         "lua-language-server",
         -- Formatters
         "black",
-        "ruff-lsp",
         "prettier",
         "php-cs-fixer",
         "stylua",
@@ -46,7 +40,6 @@ return {
     },
     config = function(_, opts)
       require("mason").setup(opts)
-      -- Auto-install ensure_installed tools
       local mr = require("mason-registry")
       mr:on("package:install:success", function()
         vim.defer_fn(function()
@@ -72,65 +65,42 @@ return {
     end,
   },
 
-  -- Bridge mason ↔ lspconfig
-  {
-    "williamboman/mason-lspconfig.nvim",
-    lazy = true,
-    opts = {
-      -- Servers auto-configured via nvim-lspconfig
-      ensure_installed = {
-        "pyright",
-        "ts_ls",
-        "intelephense",
-        "html",
-        "cssls",
-        "sqls",
-        "jsonls",
-        "lua_ls",
-      },
-      automatic_installation = true,
-    },
-  },
-
-  -- nvim-lspconfig: configure all language servers
+  -- nvim-lspconfig: provides server defaults via lsp/ directory
   {
     "neovim/nvim-lspconfig",
     event = { "BufReadPre", "BufNewFile" },
     dependencies = {
       "williamboman/mason.nvim",
-      "williamboman/mason-lspconfig.nvim",
       "saghen/blink.cmp",
     },
     config = function()
-      local lspconfig = require("lspconfig")
+      -- Global capabilities (blink.cmp)
+      vim.lsp.config("*", {
+        capabilities = require("blink.cmp").get_lsp_capabilities(),
+      })
 
-      -- Default on_attach: runs when any LSP attaches to a buffer
-      local on_attach = function(_, bufnr)
-        local map = function(keys, func, desc)
-          vim.keymap.set("n", keys, func, { buffer = bufnr, desc = "LSP: " .. desc })
-        end
+      -- Keymaps on LSP attach
+      vim.api.nvim_create_autocmd("LspAttach", {
+        callback = function(args)
+          local bufnr = args.buf
+          local map = function(keys, func, desc)
+            vim.keymap.set("n", keys, func, { buffer = bufnr, desc = "LSP: " .. desc })
+          end
+          map("gd", vim.lsp.buf.definition, "Go to definition")
+          map("gD", vim.lsp.buf.declaration, "Go to declaration")
+          map("gr", vim.lsp.buf.references, "Go to references")
+          map("gI", vim.lsp.buf.implementation, "Go to implementation")
+          map("gy", vim.lsp.buf.type_definition, "Go to type definition")
+          map("K", vim.lsp.buf.hover, "Hover docs")
+          map("<C-k>", vim.lsp.buf.signature_help, "Signature help")
+          map("<leader>rn", vim.lsp.buf.rename, "Rename symbol")
+          map("<leader>ca", vim.lsp.buf.code_action, "Code action")
+          map("<leader>cf", vim.lsp.buf.format, "Format buffer")
+        end,
+      })
 
-        map("gd", vim.lsp.buf.definition, "Go to definition")
-        map("gD", vim.lsp.buf.declaration, "Go to declaration")
-        map("gr", vim.lsp.buf.references, "Go to references")
-        map("gI", vim.lsp.buf.implementation, "Go to implementation")
-        map("gy", vim.lsp.buf.type_definition, "Go to type definition")
-        map("K", vim.lsp.buf.hover, "Hover docs")
-        map("<C-k>", vim.lsp.buf.signature_help, "Signature help")
-        map("<leader>rn", vim.lsp.buf.rename, "Rename symbol")
-        map("<leader>ca", vim.lsp.buf.code_action, "Code action")
-        map("<leader>cf", vim.lsp.buf.format, "Format buffer")
-      end
-
-      -- Capabilities enhanced by blink.cmp
-      local capabilities = require("blink.cmp").get_lsp_capabilities()
-
-      -- ── Server configurations ──────────────────────────────
-
-      -- Python
-      lspconfig.pyright.setup({
-        on_attach = on_attach,
-        capabilities = capabilities,
+      -- Server-specific settings
+      vim.lsp.config("pyright", {
         settings = {
           pyright = { autoImportCompletion = true },
           python = {
@@ -143,10 +113,7 @@ return {
         },
       })
 
-      -- TypeScript / JavaScript
-      lspconfig.ts_ls.setup({
-        on_attach = on_attach,
-        capabilities = capabilities,
+      vim.lsp.config("ts_ls", {
         settings = {
           typescript = {
             inlayHints = {
@@ -162,10 +129,7 @@ return {
         },
       })
 
-      -- PHP
-      lspconfig.intelephense.setup({
-        on_attach = on_attach,
-        capabilities = capabilities,
+      vim.lsp.config("intelephense", {
         settings = {
           intelephense = {
             stubs = {
@@ -180,36 +144,16 @@ return {
               "xmlrpc", "xmlwriter", "xsl", "Zend OPcache", "zip", "zlib",
               "wordpress",
             },
-            files = {
-              maxSize = 5000000,
-            },
+            files = { maxSize = 5000000 },
           },
         },
       })
 
-      -- HTML
-      lspconfig.html.setup({
-        on_attach = on_attach,
-        capabilities = capabilities,
+      vim.lsp.config("html", {
         filetypes = { "html", "php" },
       })
 
-      -- CSS
-      lspconfig.cssls.setup({
-        on_attach = on_attach,
-        capabilities = capabilities,
-      })
-
-      -- SQL
-      lspconfig.sqls.setup({
-        on_attach = on_attach,
-        capabilities = capabilities,
-      })
-
-      -- JSON
-      lspconfig.jsonls.setup({
-        on_attach = on_attach,
-        capabilities = capabilities,
+      vim.lsp.config("jsonls", {
         settings = {
           json = {
             schemas = require("schemastore").json.schemas(),
@@ -218,10 +162,7 @@ return {
         },
       })
 
-      -- Lua (for Neovim config editing)
-      lspconfig.lua_ls.setup({
-        on_attach = on_attach,
-        capabilities = capabilities,
+      vim.lsp.config("lua_ls", {
         settings = {
           Lua = {
             runtime = { version = "LuaJIT" },
@@ -235,7 +176,10 @@ return {
         },
       })
 
-      -- ── Diagnostics UI ─────────────────────────────────────
+      -- Enable all servers
+      vim.lsp.enable({ "pyright", "ts_ls", "intelephense", "html", "cssls", "jsonls", "lua_ls" })
+
+      -- Diagnostics UI
       vim.diagnostic.config({
         underline = true,
         update_in_insert = false,
@@ -267,7 +211,7 @@ return {
     lazy = true,
   },
 
-  -- LSP progress notifications (subtle bottom-right spinner)
+  -- LSP progress notifications
   {
     "j-hui/fidget.nvim",
     event = "LspAttach",
